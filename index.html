@@ -1,103 +1,277 @@
 <!DOCTYPE html>
-<html>
-<head>
-<title>Building 3 GRC</title>
-<meta charset="utf-8">
-<meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, minimal-ui" />
-<style> @-ms-viewport { width: device-width; } </style>
-<link rel="stylesheet" href="vendor/reset.min.css">
-<link rel="stylesheet" href="style.css">
-</head>
-<body class="multiple-scenes view-control-buttons">
+<html lang="en" dir="ltr">
+	<head>
+		<title>WebGL Gaussian Splat Viewer</title>
+		<meta charset="utf-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no"
+		/>
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta
+			name="apple-mobile-web-app-status-bar-style"
+			content="black-translucent"
+		/>
+		<style>
+			body {
+				overflow: hidden;
+				margin: 0;
+				height: 100vh;
+				width: 100vw;
+				font-family: sans-serif;
+				background: black;
+    			text-shadow: 0 0 3px black;
+			}
+			a, body {
+				color: white;
+			}
+			#info {
+				z-index: 100;
+				position: absolute;
+				top: 10px;
+				left: 15px;
+			}
+			h3 {
+				margin: 5px 0;
+			}
+			p {
+				margin: 5px 0;
+				font-size: small;
+			}
 
-<div id="pano"></div>
+			.cube-wrapper {
+				transform-style: preserve-3d;
+			}
 
-<div id="sceneList">
-  <ul class="scenes">
-    
-      <a href="javascript:void(0)" class="scene" data-id="0-1">
-        <li class="text">1</li>
-      </a>
-    
-      <a href="javascript:void(0)" class="scene" data-id="1-2">
-        <li class="text">2</li>
-      </a>
-    
-      <a href="javascript:void(0)" class="scene" data-id="2-3">
-        <li class="text">3</li>
-      </a>
-    
-      <a href="javascript:void(0)" class="scene" data-id="3-4">
-        <li class="text">4</li>
-      </a>
-    
-      <a href="javascript:void(0)" class="scene" data-id="4-5">
-        <li class="text">5</li>
-      </a>
-    
-      <a href="javascript:void(0)" class="scene" data-id="5-6">
-        <li class="text">6</li>
-      </a>
-    
-      <a href="javascript:void(0)" class="scene" data-id="6-7">
-        <li class="text">7</li>
-      </a>
-    
-      <a href="javascript:void(0)" class="scene" data-id="7-8">
-        <li class="text">8</li>
-      </a>
-    
-      <a href="javascript:void(0)" class="scene" data-id="8-9">
-        <li class="text">9</li>
-      </a>
-    
-  </ul>
+			.cube {
+				transform-style: preserve-3d;
+				transform: rotateX(45deg) rotateZ(45deg);
+				animation: rotation 2s infinite;
+			}
+
+			.cube-faces {
+				transform-style: preserve-3d;
+				height: 80px;
+				width: 80px;
+				position: relative;
+				transform-origin: 0 0;
+				transform: translateX(0) translateY(0) translateZ(-40px);
+			}
+
+			.cube-face {
+				position: absolute;
+				inset: 0;
+				background: #0017ff;
+				border: solid 1px #ffffff;
+			}
+			.cube-face.top {
+				transform: translateZ(80px);
+			}
+			.cube-face.front {
+				transform-origin: 0 50%;
+				transform: rotateY(-90deg);
+			}
+			.cube-face.back {
+				transform-origin: 0 50%;
+				transform: rotateY(-90deg) translateZ(-80px);
+			}
+			.cube-face.right {
+				transform-origin: 50% 0;
+				transform: rotateX(-90deg) translateY(-80px);
+			}
+			.cube-face.left {
+				transform-origin: 50% 0;
+				transform: rotateX(-90deg) translateY(-80px) translateZ(80px);
+			}
+
+			@keyframes rotation {
+				0% {
+					transform: rotateX(45deg) rotateY(0) rotateZ(45deg);
+					animation-timing-function: cubic-bezier(
+						0.17,
+						0.84,
+						0.44,
+						1
+					);
+				}
+				50% {
+					transform: rotateX(45deg) rotateY(0) rotateZ(225deg);
+					animation-timing-function: cubic-bezier(
+						0.76,
+						0.05,
+						0.86,
+						0.06
+					);
+				}
+				100% {
+					transform: rotateX(45deg) rotateY(0) rotateZ(405deg);
+					animation-timing-function: cubic-bezier(
+						0.17,
+						0.84,
+						0.44,
+						1
+					);
+				}
+			}
+
+			.scene,
+			#message {
+				position: absolute;
+				display: flex;
+				top: 0;
+				right: 0;
+				left: 0;
+				bottom: 0;
+				z-index: 2;
+				height: 100%;
+				width: 100%;
+				align-items: center;
+				justify-content: center;
+			}
+			#message {
+				font-weight: bold;
+				font-size: large;
+				color: red;
+				pointer-events: none;
+			}
+
+			details {
+				font-size: small;
+
+			}
+
+			#progress {
+				position: absolute;
+				top: 0;
+				height: 5px;
+				background: blue;
+				z-index: 99;
+				transition: width 0.1s ease-in-out;
+			}
+
+			#quality {
+				position: absolute;
+				bottom: 10px;
+				z-index: 999;
+				right: 10px;
+			}
+
+			#caminfo {
+				position: absolute;
+				top: 10px;
+				z-index: 999;
+				right: 10px;
+			}
+			#canvas {
+				display: block;
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				touch-action: none;
+			}
+
+			#instructions {
+				background: rgba(0,0,0,0.6);
+				white-space: pre-wrap;
+				padding: 10px;
+				border-radius: 10px;
+				font-size: x-small;
+			}
+			body.nohf .nohf {
+				display: none;
+			}
+			body.nohf #progress, body.nohf .cube-face {
+				background: #ff9d0d;
+			}
+		</style>
+	</head>
+	<body>
+		<script>
+			if(location.host.includes('hf.space')) document.body.classList.add('nohf');
+		</script>
+		<div id="info">
+			<h3 class="nohf">NASA 3D Gaussian Splat</h3>
+			<p>
+			<!--<small class="nohf">
+				By <a href="https://twitter.com/antimatter15">Kevin Kwok</a>.
+				Code on
+				<a href="https://github.com/antimatter15/splat">Github</a
+				>.
+			</small>
+		</p> -->
+
+			<details>
+			<summary>Use mouse or arrow keys to navigate.</summary>
+
+<div id="instructions">movement (arrow keys)
+- left/right arrow keys to strafe side to side
+- up/down arrow keys to move forward/back
+- space to jump
+
+camera angle (wasd)
+- a/d to turn camera left/right
+- w/s to tilt camera up/down
+- q/e to roll camera counterclockwise/clockwise
+- i/k and j/l to orbit
+
+trackpad
+- scroll up/down/left/right to orbit
+- pinch to move forward/back
+- ctrl key + scroll to move forward/back
+- shift + scroll to move up/down or strafe
+
+mouse
+- click and drag to orbit
+- right click (or ctrl/cmd key) and drag up/down to move
+
+touch (mobile)
+- one finger to orbit
+- two finger pinch to move forward/back
+- two finger rotate to rotate camera clockwise/counterclockwise
+- two finger pan to move side-to-side and up-down
+
+gamepad
+- if you have a game controller connected it should work
+
+other
+- press 0-9 to switch to one of the pre-loaded camera views
+- press '-' or '+'key to cycle loaded cameras
+- press p to resume default animation
+- drag and drop .ply file to convert to .splat
+- drag and drop cameras.json to load cameras
 </div>
 
-<div id="titleBar">
-  <h1 class="sceneName"></h1>
-</div>
+		</details>
+			
+		</div>
 
-<a href="javascript:void(0)" id="autorotateToggle">
-  <img class="icon off" src="img/play.png">
-  <img class="icon on" src="img/pause.png">
-</a>
+		<div id="progress"></div>
 
-<a href="javascript:void(0)" id="fullscreenToggle">
-  <img class="icon off" src="img/fullscreen.png">
-  <img class="icon on" src="img/windowed.png">
-</a>
+		<div id="message"></div>
+		<div class="scene" id="spinner">
+			<div class="cube-wrapper">
+				<div class="cube">
+					<div class="cube-faces">
+						<div class="cube-face bottom"></div>
+						<div class="cube-face top"></div>
+						<div class="cube-face left"></div>
+						<div class="cube-face right"></div>
+						<div class="cube-face back"></div>
+						<div class="cube-face front"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<canvas id="canvas"></canvas>
 
-<a href="javascript:void(0)" id="sceneListToggle">
-  <img class="icon off" src="img/expand.png">
-  <img class="icon on" src="img/collapse.png">
-</a>
-
-<a href="javascript:void(0)" id="viewUp" class="viewControlButton viewControlButton-1">
-  <img class="icon" src="img/up.png">
-</a>
-<a href="javascript:void(0)" id="viewDown" class="viewControlButton viewControlButton-2">
-  <img class="icon" src="img/down.png">
-</a>
-<a href="javascript:void(0)" id="viewLeft" class="viewControlButton viewControlButton-3">
-  <img class="icon" src="img/left.png">
-</a>
-<a href="javascript:void(0)" id="viewRight" class="viewControlButton viewControlButton-4">
-  <img class="icon" src="img/right.png">
-</a>
-<a href="javascript:void(0)" id="viewIn" class="viewControlButton viewControlButton-5">
-  <img class="icon" src="img/plus.png">
-</a>
-<a href="javascript:void(0)" id="viewOut" class="viewControlButton viewControlButton-6">
-  <img class="icon" src="img/minus.png">
-</a>
-
-<script src="vendor/screenfull.min.js" ></script>
-<script src="vendor/bowser.min.js" ></script>
-<script src="vendor/marzipano.js" ></script>
-
-<script src="data.js"></script>
-<script src="index.js"></script>
-
-</body>
+		<div id="quality">
+			<span id="fps"></span>
+		</div>
+		<div id="caminfo">
+			<span id="camid"></span>
+		</div>
+		<script src="main.js"></script>
+	</body>
 </html>
