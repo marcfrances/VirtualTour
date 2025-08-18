@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 	<head>
-		<title>WebGL Gaussian Splat Viewer</title>
+		<title>NASA 3D Gaussian Splat</title>
 		<meta charset="utf-8" />
 		<meta
 			name="viewport"
@@ -14,26 +14,73 @@
 		/>
 		<style>
 			body {
-				overflow: hidden;
 				margin: 0;
-				height: 100vh;
-				width: 100vw;
+				padding: 20px;
 				font-family: sans-serif;
-				background: black;
-    			text-shadow: 0 0 3px black;
+				background: #1a1a1a;
+				color: white;
+				min-height: 100vh;
+				box-sizing: border-box;
 			}
-			a, body {
+			
+			.main-container {
+				max-width: 1200px;
+				margin: 0 auto;
+				background: black;
+				border-radius: 12px;
+				overflow: hidden;
+				box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+				position: relative;
+			}
+			
+			.header {
+				background: rgba(0, 0, 0, 0.9);
+				padding: 15px 20px;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+				display: flex;
+				align-items: center;
+				gap: 15px;
+				position: relative;
+				z-index: 101;
+			}
+			
+			.logo {
+				width: 60px;
+				height: 60px;
+				background: url("./NASA_logo.png") center/contain no-repeat;
+				flex-shrink: 0;
+			}
+			
+			.header h1 {
+				margin: 0;
+				font-size: 1.5em;
+				font-weight: bold;
 				color: white;
 			}
+			
+			.viewer-container {
+				position: relative;
+				width: 100%;
+				height: 600px;
+				background: black;
+			}
+
+			a {
+				color: white;
+			}
+			
 			#info {
 				z-index: 100;
 				position: absolute;
 				top: 10px;
 				left: 15px;
+				text-shadow: 0 0 3px black;
 			}
+			
 			h3 {
 				margin: 5px 0;
 			}
+			
 			p {
 				margin: 5px 0;
 				font-size: small;
@@ -137,7 +184,6 @@
 
 			details {
 				font-size: small;
-
 			}
 
 			#progress {
@@ -162,6 +208,7 @@
 				z-index: 999;
 				right: 10px;
 			}
+			
 			#canvas {
 				display: block;
 				position: absolute;
@@ -173,17 +220,43 @@
 			}
 
 			#instructions {
-				background: rgba(0,0,0,0.6);
+				background: rgba(0,0,0,0.8);
 				white-space: pre-wrap;
 				padding: 10px;
-				border-radius: 10px;
+				border-radius: 8px;
 				font-size: x-small;
+				max-width: 300px;
 			}
+			
 			body.nohf .nohf {
 				display: none;
 			}
 			body.nohf #progress, body.nohf .cube-face {
 				background: #ff9d0d;
+			}
+			
+			/* Responsive design */
+			@media (max-width: 768px) {
+				body {
+					padding: 10px;
+				}
+				
+				.viewer-container {
+					height: 400px;
+				}
+				
+				.header {
+					padding: 10px 15px;
+				}
+				
+				.header h1 {
+					font-size: 1.2em;
+				}
+				
+				.logo {
+					width: 32px;
+					height: 32px;
+				}
 			}
 		</style>
 	</head>
@@ -191,21 +264,19 @@
 		<script>
 			if(location.host.includes('hf.space')) document.body.classList.add('nohf');
 		</script>
-		<div id="info">
-			<h3 class="nohf">NASA 3D Gaussian Splat</h3>
-			<p>
-			<!--<small class="nohf">
-				By <a href="https://twitter.com/antimatter15">Kevin Kwok</a>.
-				Code on
-				<a href="https://github.com/antimatter15/splat">Github</a
-				>.
-			</small>
-		</p> -->
+		
+		<div class="main-container">
+			<div class="header">
+				<div class="logo"></div>
+				<h1>NASA 3D Gaussian Splat</h1>
+			</div>
+			
+			<div class="viewer-container">
+				<div id="info">
+					<details>
+						<summary>Use mouse or arrow keys to navigate.</summary>
 
-			<details>
-			<summary>Use mouse or arrow keys to navigate.</summary>
-
-<div id="instructions">movement (arrow keys)
+						<div id="instructions">movement (arrow keys)
 - left/right arrow keys to strafe side to side
 - up/down arrow keys to move forward/back
 - space to jump
@@ -241,37 +312,38 @@ other
 - press p to resume default animation
 - drag and drop .ply file to convert to .splat
 - drag and drop cameras.json to load cameras
-</div>
+						</div>
+					</details>
+				</div>
 
-		</details>
-			
-		</div>
+				<div id="progress"></div>
 
-		<div id="progress"></div>
-
-		<div id="message"></div>
-		<div class="scene" id="spinner">
-			<div class="cube-wrapper">
-				<div class="cube">
-					<div class="cube-faces">
-						<div class="cube-face bottom"></div>
-						<div class="cube-face top"></div>
-						<div class="cube-face left"></div>
-						<div class="cube-face right"></div>
-						<div class="cube-face back"></div>
-						<div class="cube-face front"></div>
+				<div id="message"></div>
+				<div class="scene" id="spinner">
+					<div class="cube-wrapper">
+						<div class="cube">
+							<div class="cube-faces">
+								<div class="cube-face bottom"></div>
+								<div class="cube-face top"></div>
+								<div class="cube-face left"></div>
+								<div class="cube-face right"></div>
+								<div class="cube-face back"></div>
+								<div class="cube-face front"></div>
+							</div>
+						</div>
 					</div>
+				</div>
+				<canvas id="canvas"></canvas>
+
+				<div id="quality">
+					<span id="fps"></span>
+				</div>
+				<div id="caminfo">
+					<span id="camid"></span>
 				</div>
 			</div>
 		</div>
-		<canvas id="canvas"></canvas>
-
-		<div id="quality">
-			<span id="fps"></span>
-		</div>
-		<div id="caminfo">
-			<span id="camid"></span>
-		</div>
+		
 		<script src="main.js"></script>
 	</body>
 </html>
