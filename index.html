@@ -45,9 +45,9 @@
 			}
 			
 			.logo {
-				width: 60px;
-				height: 60px;
-				background: url("./NASA_logo.png") center/contain no-repeat;
+				width: 40px;
+				height: 40px;
+				background: url('./NASA_logo.png') center/contain no-repeat;
 				flex-shrink: 0;
 			}
 			
@@ -56,6 +56,59 @@
 				font-size: 1.5em;
 				font-weight: bold;
 				color: white;
+			}
+			
+			.url-controls {
+				margin-left: auto;
+				display: flex;
+				align-items: center;
+				gap: 10px;
+			}
+			
+			.url-dropdown {
+				padding: 8px 12px;
+				background: rgba(255, 255, 255, 0.1);
+				border: 1px solid rgba(255, 255, 255, 0.3);
+				border-radius: 6px;
+				color: white;
+				font-size: 14px;
+				min-width: 200px;
+				cursor: pointer;
+			}
+			
+			.url-dropdown option {
+				background: #333;
+				color: white;
+			}
+			
+			.load-button {
+				padding: 8px 16px;
+				background: #0066cc;
+				border: none;
+				border-radius: 6px;
+				color: white;
+				font-size: 14px;
+				cursor: pointer;
+				transition: background 0.2s;
+			}
+			
+			.load-button:hover {
+				background: #0052a3;
+			}
+			
+			.load-button:disabled {
+				background: #666;
+				cursor: not-allowed;
+			}
+			
+			.current-selection {
+				font-size: 12px;
+				color: #ccc;
+				max-width: 300px;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+				padding: 10px 20px;
 			}
 			
 			.viewer-container {
@@ -75,6 +128,11 @@
 				top: 10px;
 				left: 15px;
 				text-shadow: 0 0 3px black;
+				pointer-events: none;
+			}
+			
+			#info details {
+				pointer-events: auto;
 			}
 			
 			h3 {
@@ -165,16 +223,84 @@
 			#message {
 				position: absolute;
 				display: flex;
+				flex-direction: column;
 				top: 0;
 				right: 0;
 				left: 0;
 				bottom: 0;
-				z-index: 2;
+				z-index: 10;
 				height: 100%;
 				width: 100%;
 				align-items: center;
 				justify-content: center;
+				pointer-events: none;
 			}
+			
+			.loading-progress {
+				margin-top: 30px;
+				width: 200px;
+				height: 8px;
+				background: rgba(255, 255, 255, 0.2);
+				border-radius: 4px;
+				overflow: hidden;
+				position: relative;
+			}
+			
+			.loading-progress-bar {
+				height: 100%;
+				background: linear-gradient(90deg, #0066cc, #00aaff);
+				border-radius: 4px;
+				width: 0%;
+				transition: width 0.3s ease;
+				position: relative;
+			}
+			
+			.loading-progress-bar::after {
+				content: '';
+				position: absolute;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+				animation: shine 2s infinite;
+			}
+
+			.spinner-wrapper {
+   				width: 80px;
+    			height: 80px;
+   				display: flex;
+    			justify-content: center;
+    			align-items: center;
+			}
+
+			#spinner-image {
+				width: 100px;
+				height: 80px;
+				animation: spin 4s infinite linear;
+			}
+
+			@keyframes spin {
+				0% { transform: rotate(0deg); }
+				100% { transform: rotate(360deg); }
+			}
+			
+			@keyframes shine {
+				0% { transform: translateX(-100%); }
+				100% { transform: translateX(100%); }
+			}
+			
+			.loading-text {
+				color: #ccc;
+				font-size: 14px;
+				margin-top: 15px;
+				font-weight: normal;
+			}
+			
+			.scene.loading {
+				pointer-events: auto;
+			}
+			
 			#message {
 				font-weight: bold;
 				font-size: large;
@@ -193,6 +319,7 @@
 				background: blue;
 				z-index: 99;
 				transition: width 0.1s ease-in-out;
+				pointer-events: none;
 			}
 
 			#quality {
@@ -200,6 +327,7 @@
 				bottom: 10px;
 				z-index: 999;
 				right: 10px;
+				pointer-events: none;
 			}
 
 			#caminfo {
@@ -207,6 +335,7 @@
 				top: 10px;
 				z-index: 999;
 				right: 10px;
+				pointer-events: none;
 			}
 			
 			#canvas {
@@ -217,6 +346,7 @@
 				width: 100%;
 				height: 100%;
 				touch-action: none;
+				z-index: 1;
 			}
 
 			#instructions {
@@ -247,6 +377,8 @@
 				
 				.header {
 					padding: 10px 15px;
+					flex-wrap: wrap;
+					gap: 10px;
 				}
 				
 				.header h1 {
@@ -256,6 +388,17 @@
 				.logo {
 					width: 32px;
 					height: 32px;
+				}
+				
+				.url-controls {
+					margin-left: 0;
+					width: 100%;
+					flex-direction: column;
+					align-items: stretch;
+				}
+				
+				.url-dropdown {
+					min-width: auto;
 				}
 			}
 		</style>
@@ -269,7 +412,23 @@
 			<div class="header">
 				<div class="logo"></div>
 				<h1>NASA 3D Gaussian Splat</h1>
+				
+				<div class="url-controls">
+					<select id="urlDropdown" class="url-dropdown">
+						<option value="OP_B3ARHD.ply">Admin Room</option>
+						<option value="OP_B3AHD.ply">Auditorium</option>
+						<!--<option value="https://your-server.com/model1.splat">Server Model 1</option>
+						<option value="https://your-server.com/model2.splat">Server Model 2</option>
+						<option value="https://your-server.com/model3.splat">Server Model 3</option>
+						<option value="custom">Custom URL...</option>-->
+					</select>
+					<button id="loadButton" class="load-button">Load</button>
+				</div>
 			</div>
+			
+			<!--<div class="current-selection">
+				Current: <span id="currentUrl">OP_B3ARHD.ply</span>
+			</div> -->
 			
 			<div class="viewer-container">
 				<div id="info">
@@ -320,19 +479,14 @@ other
 
 				<div id="message"></div>
 				<div class="scene" id="spinner">
-					<div class="cube-wrapper">
-						<div class="cube">
-							<div class="cube-faces">
-								<div class="cube-face bottom"></div>
-								<div class="cube-face top"></div>
-								<div class="cube-face left"></div>
-								<div class="cube-face right"></div>
-								<div class="cube-face back"></div>
-								<div class="cube-face front"></div>
-							</div>
-						</div>
-					</div>
+				<div class="spinner-wrapper">
+					<img id="spinner-image" src="./NASA_logo.png" alt="Loading spinner">
 				</div>
+				<div class="loading-progress">
+					<div class="loading-progress-bar" id="loadingProgressBar"></div>
+				</div>
+				<div class="loading-text" id="loadingText">Loading model...</div>
+			</div>
 				<canvas id="canvas"></canvas>
 
 				<div id="quality">
